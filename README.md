@@ -48,11 +48,6 @@ wget https://dl.fbaipublicfiles.com/GENRE/fairseq_multilingual_entity_disambigua
 tar -xvzf fairseq_multilingual_entity_disambiguation.tar.gz
 ```
 
-### Useful Links
-
-- [fairseq Repository](https://github.com/facebookresearch/fairseq)
-- [GENRE Repository](https://github.com/facebookresearch/GENRE)
-- [mGENRE Pre-trained Model](https://dl.fbaipublicfiles.com/GENRE/fairseq_multilingual_entity_disambiguation.tar.gz)
 ---
 
 ## Data Organization
