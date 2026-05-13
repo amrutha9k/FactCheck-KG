@@ -1,53 +1,52 @@
 """
 This script partitions the PolitiFact dataset into training, validation, and testing sets.
-It migrates images into the split directory structure and updates CSV records to 
-maintain correct data-to-image mappings.
+Instead of copying images, it generates CSV files in the splits directory that contain
+relative paths to the images stored in the central data/politifact/ directory.
 """
 
 import os
-import shutil
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(script_dir, "../../../"))
 data_dir = os.path.join(project_root, "data")
-output_dir = os.path.join(data_dir, "splits")
+splits_root = os.path.join(data_dir, "splits")
 
-def process_and_copy(df, split_name, label, base_out_dir):
+def save_split_csv(df, split_name, label):
     """
-    Creates directory structures and migrates data for a specific split.
+    Saves the split dataframe as a CSV and ensures image paths point to the central store.
     """
-    split_folder = os.path.join(base_out_dir, split_name, label)
-    image_output_folder = os.path.join(split_folder, "images")
-    os.makedirs(image_output_folder, exist_ok=True)
+    split_dir = os.path.join(splits_root, split_name)
+    os.makedirs(split_dir, exist_ok=True)
     
     updated_records = []
     
     for _, row in df.iterrows():
         new_row = row.copy()
-        raw_path = row.get('image_path')
         
-        if str(row.get('Image_exist')).lower() == 'yes' and pd.notna(raw_path):
-            source_path = str(raw_path)
-            
-            if os.path.exists(source_path):
-                filename = os.path.basename(source_path)
-                destination_path = os.path.join(image_output_folder, filename)
-                
-                shutil.copy2(source_path, destination_path)
-                new_row['image_path'] = os.path.relpath(destination_path, project_root)
-            else:
-                new_row['Image_exist'] = 'no'
-                new_row['image_path'] = ""
+        # Verify if image exists in the central politifact folder
+        image_name = f"{row['image_id']}.jpg" # or derived from mapping
+        if 'image_path' in row and pd.notna(row['image_path']) and row['image_path'] != "None":
+            # Extract filename from existing path
+            image_name = os.path.basename(row['image_path'])
+        
+        # Construct the central path: data/politifact/[label]/images/[filename]
+        central_path = os.path.join("data", "politifact", label, "images", image_name)
+        absolute_central_path = os.path.join(project_root, central_path)
+        
+        if os.path.exists(absolute_central_path):
+            new_row['image_path'] = central_path
+            new_row['Image_exist'] = 'yes'
         else:
             new_row['image_path'] = ""
+            new_row['Image_exist'] = 'no'
             
         updated_records.append(new_row)
         
     final_df = pd.DataFrame(updated_records)
-    csv_save_path = os.path.join(split_folder, f"{label}_data.csv")
-    final_df.to_csv(csv_save_path, index=False)
+    output_path = os.path.join(split_dir, f"{label}.csv")
+    final_df.to_csv(output_path, index=False)
 
 def main():
     for label in ["fake", "real"]:
@@ -61,9 +60,9 @@ def main():
         train_df, remainder_df = train_test_split(df, test_size=0.20, random_state=42)
         val_df, test_df = train_test_split(remainder_df, test_size=0.50, random_state=42)
         
-        process_and_copy(train_df, "train", label, output_dir)
-        process_and_copy(val_df, "val", label, output_dir)
-        process_and_copy(test_df, "test", label, output_dir)
+        save_split_csv(train_df, "train", label)
+        save_split_csv(val_df, "val", label)
+        save_split_csv(test_df, "test", label)
 
 if __name__ == "__main__":
     main()
