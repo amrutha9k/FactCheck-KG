@@ -1,1 +1,25 @@
+# Required Python Version: 3.10.14
 
+# Deep Learning and Vision
+torch
+torchvision
+transformers
+vllm
+qwen-vl-utils
+
+# Entity Linking and NLP
+fairseq
+spacy
+scikit-learn
+
+# Data Handling and Processing
+pandas
+numpy
+tqdm
+Pillow
+
+# Web Scraping and Utilities
+requests
+beautifulsoup4
+cloudscraper
+urllib3
